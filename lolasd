@@ -266,15 +266,18 @@ RaidFarmToggle:OnChanged(function(value)
     Settings.AutoFarm.RaidFarm = value
 end)
 
-local AutoRetryToggle = SettingsGroup:AddToggle("AutoRetryToggle",{Text = "Auto Retry Dungeon",Default = false,Risky = false})
-AutoRetryToggle:OnChanged(function(value)
-    Settings.Misc.AutoRetry = value
-end)
+local DungeonEndGroup = MiscTab:AddLeftGroupbox("Dungeon End")
 
-local AutoReturnLobbyToggle = SettingsGroup:AddToggle("AutoReturnLobbyToggle",{Text = "Auto Return to Lobby",Default = false,Risky = false})
+local AutoReturnLobbyToggle = DungeonEndGroup:AddToggle("AutoReturnLobbyToggle",{Text = "Auto Return to Lobby",Default = false,Risky = false})
+AutoReturnLobbyToggle:AddTooltip("Automatically votes to return to the lobby after a dungeon.")
 AutoReturnLobbyToggle:OnChanged(function(value)
     Settings.Misc.AutoReturnLobby = value
 end)
+
+local AutoRetryToggle = SettingsGroup:AddToggle("AutoRetryToggle",{Text = "Auto Retry",Default = false,Risky = false})
+AutoRetryToggle:OnChanged(function(value)
+    Settings.Misc.AutoRetry = value
+
 
 local GetGreggCoinToggle = SettingsGroup:AddToggle("GetGreggCoin",{Text = "Get Gregg Coin",Default = false,Risky = false})
 GetGreggCoinToggle:OnChanged(function(value)
