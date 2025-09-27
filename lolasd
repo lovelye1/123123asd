@@ -133,18 +133,15 @@ function Functions:GetClosestEnemy()
     if Functions:GetEnemys() == nil then return end
 
     local closestEnemy = nil
-    local highestHealthEnemy = nil
     local shortestDistance = math.huge
-    local maxHealth = -math.huge
     for _, v in pairs(Functions:GetEnemys()) do
         local enemyPosition = v:FindFirstChild("HumanoidRootPart") and v.HumanoidRootPart.Position
         local enemyHumanoid = v:FindFirstChild("Humanoid")
         if enemyPosition and enemyHumanoid then
             local distance = (Character.HumanoidRootPart.Position - enemyPosition).Magnitude
-            if distance < shortestDistance or (distance == shortestDistance and enemyHumanoid.MaxHealth > maxHealth) then
+            if distance < shortestDistance then
                 shortestDistance = distance
                 closestEnemy = v
-                maxHealth = enemyHumanoid.MaxHealth
             end
         end
     end
@@ -262,22 +259,30 @@ AutoCreateDungeonTierDrop:OnChanged(function(Value)
     Settings.Dungeon.Tier = Value
 end)
 --DungeonCreateGroup End
---Settings Group Start
-local AutoRetryToggle = SettingsGroup:AddToggle("AutoRetryToggle",{Text = "Auto Retry",Default = false,Risky = false})
-AutoRetryToggle:OnChanged(function(value)
-    Settings.Misc.AutoRetry = value
-end)
+
+--Settings Group Start (Farming Tab)
 local RaidFarmToggle = SettingsGroup:AddToggle("RaidFarmToggle",{Text = "Raid Farm",Default = false,Risky = false})
 RaidFarmToggle:OnChanged(function(value)
     Settings.AutoFarm.RaidFarm = value
 end)
+
+local AutoRetryToggle = SettingsGroup:AddToggle("AutoRetryToggle",{Text = "Auto Retry Dungeon",Default = false,Risky = false})
+AutoRetryToggle:OnChanged(function(value)
+    Settings.Misc.AutoRetry = value
+end)
+
+local AutoReturnLobbyToggle = SettingsGroup:AddToggle("AutoReturnLobbyToggle",{Text = "Auto Return to Lobby",Default = false,Risky = false})
+AutoReturnLobbyToggle:OnChanged(function(value)
+    Settings.Misc.AutoReturnLobby = value
+end)
+
 local GetGreggCoinToggle = SettingsGroup:AddToggle("GetGreggCoin",{Text = "Get Gregg Coin",Default = false,Risky = false})
 GetGreggCoinToggle:OnChanged(function(value)
     Settings.Misc.GetGreggCoin = value
 end)
 --Settings Group End
 
---Auto Sell Start
+--Auto Sell Start (Misc Tab)
 local AutoSellEnabledToggle = AutoSellGroup:AddToggle("AutoSellEnabledToggle",{Text = "Auto Sell",Default = false,Risky = false})
 AutoSellEnabledToggle:AddTooltip("This Will Sell All Selected Raritys!")
 AutoSellEnabledToggle:OnChanged(function(value)
@@ -302,7 +307,7 @@ AutoSellRarirtyDrop:OnChanged(function(Value)
     end
 end)
 --Auto Sell End
---Name Hide Start
+--Name Hide Start (Misc Tab)
 local NameHideEnabledToggle = NameHideGroup:AddToggle("NameHideEnabledToggle",{Text = "Enabled",Default = false,Risky = false})
 NameHideEnabledToggle:OnChanged(function(value)
     Settings.Misc.NameHide = value
@@ -311,12 +316,12 @@ local NameHideNameTextbox = NameHideGroup:AddInput("NameHideNameTextbox",{Text =
 NameHideNameTextbox:OnChanged(function(Value)
     NameHideName = Value
 end)
-local NameHideTitleTextbox = NameHideGroup:AddInput("NameHideTitleTextbox",{Text = "Title";Default = "￰ﾟﾤﾖ",Numeric = false,Finished = true})
+local NameHideTitleTextbox = NameHideGroup:AddInput("NameHideTitleTextbox",{Text = "Title";Default = "🤖",Numeric = false,Finished = true})
 NameHideTitleTextbox:OnChanged(function(Value)
     NameHideTitle = Value
 end)
 --Name Hide End
---Rejoin Stuck Start
+--Rejoin Stuck Start (Misc Tab)
 local RejoinStuckEnabledToggle = RejoinStuckGroup:AddToggle("RejoinStuckEnabledToggle",{Text = "Enabled",Default = false,Risky = false})
 RejoinStuckEnabledToggle:OnChanged(function(value)
     Settings.Misc.RejoinIfStuck = value
@@ -328,35 +333,30 @@ RejoinStuckDelaySlider:OnChanged(function(Value)
 end)
 --Rejoin Stuck End
 
--- [FIXED AND IMPROVED CODE]
+-- [FIXED AND IMPROVED CODE FOR RETRY/RETURN LOGIC]
 task.spawn(function()
     while task.wait(1) do
         local retryVoteGui = Players.LocalPlayer.PlayerGui:FindFirstChild("RetryVote")
 
-        -- Check if the rewards screen is visible and enabled
         if retryVoteGui and retryVoteGui.Enabled == true then
             if Settings.Misc.AutoReturnLobby == true then
-                -- Fire the event to return to the lobby
                 game:GetService("ReplicatedStorage").dataRemoteEvent:FireServer({[1] = {["\3"] = "vote",["vote"] = false},[2] = RemoteCodes["DungeonRetryBridge"]})    
-                task.wait(3) -- Add a small delay to prevent sending multiple requests
-            
+                task.wait(3) 
             elseif Settings.Misc.AutoRetry == true then
-                -- Fire the event to retry the dungeon
                 game:GetService("ReplicatedStorage").dataRemoteEvent:FireServer({[1] = {["\3"] = "vote",["vote"] = true},[2] = RemoteCodes["DungeonRetryBridge"]})    
-                task.wait(3) -- Add a small delay
+                task.wait(3)
             end
         end
     end
 end)
 
 --Connections
-
 task.spawn(function()
     while true do task.wait(1)
         if Settings.Misc.RejoinIfStuck == true then
             if LastplayerPos and Character and (LastplayerPos - Character:GetPivot().p).Magnitude < 1 then
                 StuckTime = StuckTime + 1
-            elseif StuckTime == Settings.Misc.RejoinStuckDelay then
+            elseif StuckTime >= Settings.Misc.RejoinStuckDelay then
                 game:GetService("TeleportService"):Teleport(2414851778,game.Players.LocalPlayer)
             else
                 StuckTime = 0
@@ -364,7 +364,6 @@ task.spawn(function()
         end
     end
 end)
-
 
 task.spawn(function()
     while true do task.wait()
@@ -384,17 +383,17 @@ task.spawn(function()
                     PlayerGui.PartyUi.Frame.PartyScreen.MainFrame.Members.Content[Players.LocalPlayer.UserId].MemberData.Username.Text = "@"..NameHideName
                 end
             else
-                if PlayerGui.PartyUi.Frame.PartyScreen.MainFrame.Members.Content:FindFirstChild(tostring(Players.LocalPlayer.UserId)) then
+                if OldName and PlayerGui.PartyUi.Frame.PartyScreen.MainFrame.Members.Content:FindFirstChild(tostring(Players.LocalPlayer.UserId)) then
                     PlayerGui.PartyUi.Frame.PartyScreen.MainFrame.Members.Content[Players.LocalPlayer.UserId].MemberImage.Visible = true
-                    PlayerGui.PartyUi.Frame.PartyScreen.MainFrame.Members.Content[Players.LocalPlayer.UserId].MemberData.DisplayName.Text = OldName or "Nil"
-                    PlayerGui.PartyUi.Frame.PartyScreen.MainFrame.Members.Content[Players.LocalPlayer.UserId].MemberData.Username.Text = "@"..OldName or "@Nil"
+                    PlayerGui.PartyUi.Frame.PartyScreen.MainFrame.Members.Content[Players.LocalPlayer.UserId].MemberData.DisplayName.Text = OldName
+                    PlayerGui.PartyUi.Frame.PartyScreen.MainFrame.Members.Content[Players.LocalPlayer.UserId].MemberData.Username.Text = "@"..OldName
                 end
                 Players.LocalPlayer.PlayerGui.HUD.Main.PlayerStatus.PlayerStatus.Portrait.Frame.ImageLabel.Visible = true
-                Players.LocalPlayer.PlayerGui.HUD.Main.PlayerStatus.PlayerStatus.PlayerName.Text = OldName or "Nil"
-                Character.Head.playerNameplate.PlayerName.Text = OldName or "Nil"
-                Character.Head.playerNameplate.Title.Text=OldTitle or "Nil"
-                PlayerGui.PartyUi.Frame.CreateScreen.DungeonInfo.Owner.Text = OldName or "Nil"
-                PlayerGui.PartyUi.Frame.CreateScreen.DungeonInfo.PartyName.Text = OldName.." Party" or "Nil Party"
+                Players.LocalPlayer.PlayerGui.HUD.Main.PlayerStatus.PlayerStatus.PlayerName.Text = OldName or ""
+                Character.Head.playerNameplate.PlayerName.Text = OldName or ""
+                Character.Head.playerNameplate.Title.Text = OldTitle or ""
+                PlayerGui.PartyUi.Frame.CreateScreen.DungeonInfo.Owner.Text = OldName or ""
+                PlayerGui.PartyUi.Frame.CreateScreen.DungeonInfo.PartyName.Text = (OldName or "") .." Party"
             end
         end
     end    
@@ -413,35 +412,37 @@ task.spawn(function()
             end 
             game:GetService("ReplicatedStorage"):WaitForChild("remotes"):WaitForChild("sellItemEvent"):FireServer(args)
         end
-        if workspace:FindFirstChild("CharacterSelectScene") and Settings.Dungeon.Enabled == true then
-            local DunArgs = {[1] = {[1] = {[1] = "\1",[2] = {["\3"] = "PlaySolo",["partyData"] = {
-                                ["difficulty"] = Settings.Dungeon.Diffculty,
-                                ["mode"] = Settings.Dungeon.Mode,
-                                ["dungeonName"] = Settings.Dungeon.Name,
-                                ["tier"] = 1,
-                            }}},[2] = RemoteCodes["PartySystem"]}}
-            game:GetService("ReplicatedStorage"):WaitForChild("dataRemoteEvent"):FireServer(unpack(DunArgs))
-        elseif workspace:FindFirstChild("CharacterSelectScene") and Settings.Dungeon.RaidEnabled == true then
-            local RaidArgs = {[1] = {[1] = {[1] = "\1",[2] = {["\3"] = "PlaySolo",["partyData"] = {
-                                ["difficulty"] = "Nightmare",
-                                ["minimumJoinLevel"] = 0,
-                                ["tier"] = Settings.Dungeon.Tier,
-                                ["dungeonName"] = Settings.Dungeon.RaidName,
-                                ["mode"] = "Raid",
-                                ["visibility"] = "Public",
-                                ["maxPlayers"] = 40
-                            }}},[2] = RemoteCodes["PartySystem"]}}
-            game:GetService("ReplicatedStorage"):WaitForChild("dataRemoteEvent"):FireServer(unpack(RaidArgs))
-        elseif Settings.Dungeon.EnabledBest == true then
-            local DunArgs = {[1] = {[1] = {[1] = "\1",[2] = {["\3"] = "PlaySolo",["partyData"] = {
-                ["difficulty"] = BestDifficulty,
-                ["mode"] = "Normal",
-                ["dungeonName"] = BestDungeon,
-                ["tier"] = 1,
-            }}},[2] = RemoteCodes["PartySystem"]}}
-            game:GetService("ReplicatedStorage"):WaitForChild("dataRemoteEvent"):FireServer(unpack(DunArgs))
+        if workspace:FindFirstChild("CharacterSelectScene") then
+            if Settings.Dungeon.Enabled == true then
+                local DunArgs = {[1] = {[1] = {[1] = "\1",[2] = {["\3"] = "PlaySolo",["partyData"] = {
+                                    ["difficulty"] = Settings.Dungeon.Diffculty,
+                                    ["mode"] = Settings.Dungeon.Mode,
+                                    ["dungeonName"] = Settings.Dungeon.Name,
+                                    ["tier"] = 1,
+                                }}},[2] = RemoteCodes["PartySystem"]}}
+                game:GetService("ReplicatedStorage"):WaitForChild("dataRemoteEvent"):FireServer(unpack(DunArgs))
+            elseif Settings.Dungeon.RaidEnabled == true then
+                local RaidArgs = {[1] = {[1] = {[1] = "\1",[2] = {["\3"] = "PlaySolo",["partyData"] = {
+                                    ["difficulty"] = "Nightmare",
+                                    ["minimumJoinLevel"] = 0,
+                                    ["tier"] = Settings.Dungeon.Tier,
+                                    ["dungeonName"] = Settings.Dungeon.RaidName,
+                                    ["mode"] = "Raid",
+                                    ["visibility"] = "Public",
+                                    ["maxPlayers"] = 40
+                                }}},[2] = RemoteCodes["PartySystem"]}}
+                game:GetService("ReplicatedStorage"):WaitForChild("dataRemoteEvent"):FireServer(unpack(RaidArgs))
+            elseif Settings.Dungeon.EnabledBest == true then
+                local DunArgs = {[1] = {[1] = {[1] = "\1",[2] = {["\3"] = "PlaySolo",["partyData"] = {
+                    ["difficulty"] = BestDifficulty,
+                    ["mode"] = "Normal",
+                    ["dungeonName"] = BestDungeon,
+                    ["tier"] = 1,
+                }}},[2] = RemoteCodes["PartySystem"]}}
+                game:GetService("ReplicatedStorage"):WaitForChild("dataRemoteEvent"):FireServer(unpack(DunArgs))
+            end
         end
-        if not workspace:FindFirstChild("CharacterSelectScene") and Settings.AutoFarm.Enabled == true and Character == Players.LocalPlayer.Character and Character:FindFirstChild("HumanoidRootPart") then
+        if not workspace:FindFirstChild("CharacterSelectScene") and Settings.AutoFarm.Enabled == true and Character and Character:FindFirstChild("HumanoidRootPart") then
             if Players.LocalPlayer.PlayerGui.HUD.Main.StartButton.Visible == true or Players.LocalPlayer.PlayerGui.RaidReadyCheck.Enabled == true then
                 game:GetService("ReplicatedStorage").dataRemoteEvent:FireServer({[1] = {[utf8.char(3)] = "vote",["vote"] = true},[2] = utf8.char(28)}) --UPDATE CODE
                 game:GetService("ReplicatedStorage").remotes.changeStartValue:FireServer() 
@@ -476,8 +477,8 @@ workspace.ChildAdded:Connect(function(child)
 end)
 
 --Settings Start
-local Settings = Window:AddTab("Settings")
-local SettingsUI = Settings:AddLeftGroupbox("UI")
+local SettingsTab = Window:AddTab("Settings")
+local SettingsUI = SettingsTab:AddLeftGroupbox("UI")
 local SettingsUnloadButton = SettingsUI:AddButton({Text="Unload",Func=function()
     if PlayerGui.PartyUi.Frame.PartyScreen.MainFrame.Members.Content:FindFirstChild(tostring(Players.LocalPlayer.UserId)) then
         PlayerGui.PartyUi.Frame.PartyScreen.MainFrame.Members.Content[Players.LocalPlayer.UserId].MemberImage.Visible = true
@@ -507,11 +508,11 @@ end)
 
 Library.ThemeManager:SetLibrary(Library)
 Library.SaveManager:SetLibrary(Library)
-Library.ThemeManager:ApplyToTab(Settings)
+Library.ThemeManager:ApplyToTab(SettingsTab)
 Library.SaveManager:IgnoreThemeSettings()
 Library.SaveManager:SetIgnoreIndexes({"MenuKeybind","BackgroundColor", "ActiveColor", "ItemBorderColor", "ItemBackgroundColor", "TextColor" , "DisabledTextColor", "RiskyColor"})
 Library.SaveManager:SetFolder('DungeonQuest')
-Library.SaveManager:BuildConfigSection(Settings)
+Library.SaveManager:BuildConfigSection(SettingsTab)
 Library.KeybindContainer.Visible = false
 Library.SaveManager:LoadAutoloadConfig()
 --Settings End
@@ -543,7 +544,7 @@ if queue_on_teleport ~= nil then
     queue_on_teleport('loadstring(game:HttpGet("https://raw.githubusercontent.com/lovelye1/123123asd/refs/heads/main/lolasd"))()')
 end
 
-repeat task.wait() until Character:FindFirstChild("HumanoidRootPart") and Players.LocalPlayer.PlayerGui and Players.LocalPlayer.PlayerGui:FindFirstChild("HUD") and Players.LocalPlayer.PlayerGui.HUD:FindFirstChild("Main") and Players.LocalPlayer.PlayerGui.HUD.Main:FindFirstChild("PlayerStatus") and Players.LocalPlayer.PlayerGui and Players.LocalPlayer.PlayerGui.HUD.Main.PlayerStatus:FindFirstChild("PlayerStatus") and Players.LocalPlayer.PlayerGui.HUD.Main.PlayerStatus.PlayerStatus:FindFirstChild("PlayerName")
+repeat task.wait() until Character and Character:FindFirstChild("HumanoidRootPart") and Players.LocalPlayer.PlayerGui and Players.LocalPlayer.PlayerGui:FindFirstChild("HUD") and Players.LocalPlayer.PlayerGui.HUD:FindFirstChild("Main") and Players.LocalPlayer.PlayerGui.HUD.Main:FindFirstChild("PlayerStatus") and Players.LocalPlayer.PlayerGui.HUD.Main.PlayerStatus:FindFirstChild("PlayerStatus") and Players.LocalPlayer.PlayerGui.HUD.Main.PlayerStatus.PlayerStatus:FindFirstChild("PlayerName")
 Functions:GetBestDungeon()
 AutoCreateDungeonNameDrop:SetValue(BestDungeon)
 AutoCreateDungeonDiffcultyDrop:SetValue(BestDifficulty)
