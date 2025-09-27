@@ -337,12 +337,25 @@ RejoinStuckDelaySlider:OnChanged(function(Value)
 end)
 --Rejoin Stuck End
 
--- NEWLY ADDED UI GROUP FOR MISC TAB
-local DungeonEndGroup = MiscTab:AddLeftGroupbox("Dungeon End")
-local AutoReturnLobbyToggle = DungeonEndGroup:AddToggle("AutoReturnLobbyToggle",{Text = "Auto Return to Lobby",Default = false,Risky = false})
-AutoReturnLobbyToggle:AddTooltip("Automatically votes to return to the lobby after a dungeon.")
-AutoReturnLobbyToggle:OnChanged(function(value)
-    Settings.Misc.AutoReturnLobby = value
+-- [FIXED AND IMPROVED CODE]
+task.spawn(function()
+    while task.wait(1) do
+        local retryVoteGui = Players.LocalPlayer.PlayerGui:FindFirstChild("RetryVote")
+
+        -- Check if the rewards screen is visible and enabled
+        if retryVoteGui and retryVoteGui.Enabled == true then
+            if Settings.Misc.AutoReturnLobby == true then
+                -- Fire the event to return to the lobby
+                game:GetService("ReplicatedStorage").dataRemoteEvent:FireServer({[1] = {["\3"] = "vote",["vote"] = false},[2] = RemoteCodes["DungeonRetryBridge"]})    
+                task.wait(3) -- Add a small delay to prevent sending multiple requests
+            
+            elseif Settings.Misc.AutoRetry == true then
+                -- Fire the event to retry the dungeon
+                game:GetService("ReplicatedStorage").dataRemoteEvent:FireServer({[1] = {["\3"] = "vote",["vote"] = true},[2] = RemoteCodes["DungeonRetryBridge"]})    
+                task.wait(3) -- Add a small delay
+            end
+        end
+    end
 end)
 
 --Connections
