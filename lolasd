@@ -263,14 +263,6 @@ AutoCreateDungeonTierDrop:OnChanged(function(Value)
 end)
 --DungeonCreateGroup End
 --Settings Group Start
-local AutoRetryToggle = SettingsGroup:AddToggle("AutoRetryToggle",{Text = "Auto Retry",Default = false,Risky = false})
-AutoRetryToggle:OnChanged(function(value)
-    Settings.Misc.AutoRetry = value
-end)
-local RaidFarmToggle = SettingsGroup:AddToggle("RaidFarmToggle",{Text = "Raid Farm",Default = false,Risky = false})
-RaidFarmToggle:OnChanged(function(value)
-    Settings.AutoFarm.RaidFarm = value
-end)
 Players.LocalPlayer.PlayerGui:WaitForChild("RetryVote").Changed:Connect(function(change)
     if change == "Enabled" then
         if Settings.Misc.AutoRetry == true then
@@ -280,6 +272,16 @@ Players.LocalPlayer.PlayerGui:WaitForChild("RetryVote").Changed:Connect(function
         end
     end
 end)
+
+local RaidFarmToggle = SettingsGroup:AddToggle("RaidFarmToggle",{Text = "Raid Farm",Default = false,Risky = false})
+RaidFarmToggle:OnChanged(function(value)
+    Settings.AutoFarm.RaidFarm = value
+end)
+
+local AutoRetryToggle = SettingsGroup:AddToggle("AutoRetryToggle",{Text = "Auto Retry",Default = false,Risky = false})
+AutoRetryToggle:OnChanged(function(value)
+    Settings.Misc.AutoRetry = value
+
 local GetGreggCoinToggle = SettingsGroup:AddToggle("GetGreggCoin",{Text = "Get Gregg Coin",Default = false,Risky = false})
 GetGreggCoinToggle:OnChanged(function(value)
     Settings.Misc.GetGreggCoin = value
