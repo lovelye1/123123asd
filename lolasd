@@ -266,10 +266,14 @@ local AutoRetryToggle = SettingsGroup:AddToggle("AutoRetryToggle",{Text = "Auto 
 AutoRetryToggle:OnChanged(function(value)
     Settings.Misc.AutoRetry = value
 end)
-local AutoReturnToLobbyToggle = SettingsGroup:AddToggle("AutoReturnToLobbyToggle", {Text = "Auto Return To Lobby", Default = false, Risky = false})
-AutoReturnToLobbyToggle:OnChanged(function(value)
-    Settings.Misc.AutoReturnToLobby = value
+local DungeonEndGroup = MiscTab:AddLeftGroupbox("Dungeon End")
+
+local AutoReturnLobbyToggle = DungeonEndGroup:AddToggle("AutoReturnLobbyToggle",{Text = "Auto Return to Lobby",Default = false,Risky = false})
+AutoReturnLobbyToggle:AddTooltip("Automatically votes to return to the lobby after a dungeon.")
+AutoReturnLobbyToggle:OnChanged(function(value)
+    Settings.Misc.AutoReturnLobby = value
 end)
+
 local RaidFarmToggle = SettingsGroup:AddToggle("RaidFarmToggle",{Text = "Raid Farm",Default = false,Risky = false})
 RaidFarmToggle:OnChanged(function(value)
     Settings.AutoFarm.RaidFarm = value
