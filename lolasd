@@ -19,7 +19,7 @@ local Settings = {
     AutoFarm={Enabled=false,Delay=2,Distance=6,UseSkills=false,RaidFarm=false},
     Dungeon={Enabled=false,EnabledBest=false,Name="",Diffculty="",Mode="Normal",RaidEnabled=false,RaidName="",Tier="1"},
     AutoSell = {Enabled = false,Raritys = {},ItemTypes = {}};
-    Misc={AutoRetry=false,AutoReturnToLobby=false,GetGreggCoin=false,NameHide=false,RejoinIfStuck=false,RejoinStuckDelay=120},
+    Misc={AutoRetry=false,AutoReturnLobby=false,GetGreggCoin=false,NameHide=false,RejoinIfStuck=false,RejoinStuckDelay=120},
     DebugMode=false,
 }
 local DungeonLevels = {
@@ -184,7 +184,8 @@ else
     RemoteCodes={["DungeonRetryBridge"]="/",["CharacterSelection"]="M",["PartySystem"]="d",["Cutscene"]="\184",["Intro"]="5",["DungeonHandler"]=";",["Abilities"]="G"}
 end
 
-repeat task.wait() until Players.LocalPlayer and Players.LocalPlayer.PlayerGui
+repeat task.wait() 
+until Players.LocalPlayer and Players.LocalPlayer.PlayerGui
 for i=0,5 do task.wait(.2)
     if Players.LocalPlayer.PlayerGui:FindFirstChild("CharacterSelection") and not Character then
         game:GetService("ReplicatedStorage"):WaitForChild("dataRemoteEvent"):FireServer({[1] = {[1] = "\1",[2] = {["\3"] = "select",["characterIndex"] = 1}},[2] = RemoteCodes["CharacterSelection"]})
@@ -262,26 +263,29 @@ AutoCreateDungeonTierDrop:OnChanged(function(Value)
 end)
 --DungeonCreateGroup End
 --Settings Group Start
-local RetryVoteGui = Players.LocalPlayer.PlayerGui:WaitForChild("RetryVote")
-RetryVoteGui:GetPropertyChangedSignal("Enabled"):Connect(function()
-    if RetryVoteGui.Enabled == true and Settings.Misc.AutoRetry == true then
-        game:GetService("ReplicatedStorage").dataRemoteEvent:FireServer({[1] = {["\3"] = "vote",["vote"] = true},[2] = RemoteCodes["DungeonRetryBridge"]})    
-    end
-end)
-local AutoReturnLobbyToggle = DungeonEndGroup:AddToggle("AutoReturnLobbyToggle",{Text = "Auto Return to Lobby",Default = false,Risky = false})
-AutoReturnLobbyToggle:AddTooltip("Automatically votes to return to the lobby after a dungeon.")
-AutoReturnLobbyToggle:OnChanged(function(value)
-    Settings.Misc.AutoReturnLobby = value
+local AutoRetryToggle = SettingsGroup:AddToggle("AutoRetryToggle",{Text = "Auto Retry",Default = false,Risky = false})
+AutoRetryToggle:OnChanged(function(value)
+    Settings.Misc.AutoRetry = value
 end)
 local RaidFarmToggle = SettingsGroup:AddToggle("RaidFarmToggle",{Text = "Raid Farm",Default = false,Risky = false})
 RaidFarmToggle:OnChanged(function(value)
     Settings.AutoFarm.RaidFarm = value
+end)
+Players.LocalPlayer.PlayerGui:WaitForChild("RetryVote").Changed:Connect(function(change)
+    if change == "Enabled" then
+        if Settings.Misc.AutoRetry == true then
+            game:GetService("ReplicatedStorage").dataRemoteEvent:FireServer({[1] = {["\3"] = "vote",["vote"] = true},[2] = RemoteCodes["DungeonRetryBridge"]})    
+        elseif Settings.Misc.AutoReturnLobby == true then
+            game:GetService("ReplicatedStorage").dataRemoteEvent:FireServer({[1] = {["\3"] = "vote",["vote"] = false},[2] = RemoteCodes["DungeonRetryBridge"]})    
+        end
+    end
 end)
 local GetGreggCoinToggle = SettingsGroup:AddToggle("GetGreggCoin",{Text = "Get Gregg Coin",Default = false,Risky = false})
 GetGreggCoinToggle:OnChanged(function(value)
     Settings.Misc.GetGreggCoin = value
 end)
 --Settings Group End
+
 --Auto Sell Start
 local AutoSellEnabledToggle = AutoSellGroup:AddToggle("AutoSellEnabledToggle",{Text = "Auto Sell",Default = false,Risky = false})
 AutoSellEnabledToggle:AddTooltip("This Will Sell All Selected Raritys!")
@@ -316,7 +320,7 @@ local NameHideNameTextbox = NameHideGroup:AddInput("NameHideNameTextbox",{Text =
 NameHideNameTextbox:OnChanged(function(Value)
     NameHideName = Value
 end)
-local NameHideTitleTextbox = NameHideGroup:AddInput("NameHideTitleTextbox",{Text = "Title";Default = "🤖",Numeric = false,Finished = true})
+local NameHideTitleTextbox = NameHideGroup:AddInput("NameHideTitleTextbox",{Text = "Title";Default = "￰ﾟﾤﾖ",Numeric = false,Finished = true})
 NameHideTitleTextbox:OnChanged(function(Value)
     NameHideTitle = Value
 end)
@@ -332,6 +336,14 @@ RejoinStuckDelaySlider:OnChanged(function(Value)
     Settings.Misc.RejoinStuckDelay = Value
 end)
 --Rejoin Stuck End
+
+-- NEWLY ADDED UI GROUP FOR MISC TAB
+local DungeonEndGroup = MiscTab:AddLeftGroupbox("Dungeon End")
+local AutoReturnLobbyToggle = DungeonEndGroup:AddToggle("AutoReturnLobbyToggle",{Text = "Auto Return to Lobby",Default = false,Risky = false})
+AutoReturnLobbyToggle:AddTooltip("Automatically votes to return to the lobby after a dungeon.")
+AutoReturnLobbyToggle:OnChanged(function(value)
+    Settings.Misc.AutoReturnLobby = value
+end)
 
 --Connections
 
@@ -502,12 +514,7 @@ Library.SaveManager:LoadAutoloadConfig()
 
 --Init
 Players.LocalPlayer.PlayerGui.rewardGuiHolder.holder.ChildAdded:Connect(function()
-    task.wait(1) -- Short delay for UI to load
-    if Settings.Misc.AutoRetry == true then
-        game:GetService("ReplicatedStorage").dataRemoteEvent:FireServer({[1] = {["\3"] = "vote",["vote"] = true},[2] = RemoteCodes["DungeonRetryBridge"]})    
-    elseif Settings.Misc.AutoReturnToLobby == true then
-        game:GetService("TeleportService"):Teleport(2414851778,game.Players.LocalPlayer)
-    elseif Settings.AutoFarm.RaidFarm == true then
+    if Settings.AutoFarm.RaidFarm == true then
         game:GetService("TeleportService"):Teleport(2414851778,game.Players.LocalPlayer)
     end
 end)
@@ -529,7 +536,7 @@ end)
 Library:Notify({Title="Loaded";Text=string.format('Loaded In '..(tick()-oldTick));Duration=5})
 
 if queue_on_teleport ~= nil then
-    queue_on_teleport('loadstring(game:HttpGet("https://raw.githubusercontent.com/lovelye1/123123asd/refs/heads/main/lolasd"))()')
+    queue_on_teleport('https://raw.githubusercontent.com/lovelye1/123123asd/refs/heads/main/lolasd"))()')
 end
 
 repeat task.wait() until Character:FindFirstChild("HumanoidRootPart") and Players.LocalPlayer.PlayerGui and Players.LocalPlayer.PlayerGui:FindFirstChild("HUD") and Players.LocalPlayer.PlayerGui.HUD:FindFirstChild("Main") and Players.LocalPlayer.PlayerGui.HUD.Main:FindFirstChild("PlayerStatus") and Players.LocalPlayer.PlayerGui and Players.LocalPlayer.PlayerGui.HUD.Main.PlayerStatus:FindFirstChild("PlayerStatus") and Players.LocalPlayer.PlayerGui.HUD.Main.PlayerStatus.PlayerStatus:FindFirstChild("PlayerName")
